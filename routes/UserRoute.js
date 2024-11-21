@@ -4,7 +4,8 @@ import {
   CreateUser,
   findById,
   GetAllUsers,
-  upDateUsername,
+  updatePasswordById,
+  upDateUsernameById,
   userLogin,
 } from "../controllers/userController.js";
 
@@ -18,6 +19,7 @@ router.post("/create", CreateUser);
 router.get("/get", GetAllUsers);
 router.get("/:id", findById);
 router.post("/login", userLogin);
-router.patch("/:id", upDateUsername);
+router.patch("/update-Username/:id", upDateUsernameById);
+router.patch("/update-password/:id", updatePasswordById);
 
 export default router;

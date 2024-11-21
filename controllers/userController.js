@@ -52,7 +52,7 @@ export const userLogin = async (req, res) => {
     }
     const user = await User.findOne({ username });
     if (!user) return res.status(401).send("username dose not exist");
-    const isCorrectPassword = await bcrypt.compare(password, user.password);
+    const isCorrectPassword = bcrypt.compare(password, user.password);
     if (!isCorrectPassword) {
       return res.status(401).send("invalid password");
     }
@@ -63,44 +63,83 @@ export const userLogin = async (req, res) => {
 };
 
 // Changing or updating a user name
-export const upDateUsername = async (req, res) => {
+export const upDateUsernameById = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).send("Previous Username and password are required.");}
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { username: username },
-      { new: true, runValidators: true }
-    );
-    if (!user) {return res.status(404).send("User not found.");}
-    res.status(200).send(user);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-};
-
-// Changing or updating user password
-export const upDateUserPassword = async (req, res) => {
-  try {
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
-      return res.status(400).send("Both old and new passwords are required.");
-    }
-    const user = await User.findById(req.params.id);
+    const { id } = req.params;
+    const { newUsername } = req.body;
+    const user = await User.findByIdAndUpdate(id, { username: newUsername });
     if (!user) {
       return res.status(404).send("User not found.");
     }
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).send("Invalid old password.");
-    }
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
-    res.status(200).send("Password updated successfully.");
+    res.status(200).send("user name updated successfully");
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 };
 
+export const updatePasswordById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword, oldPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).send("Both old and new passwords are required.");
+    }
+    if (newPassword === oldPassword) {
+      return res
+        .status(400)
+        .send("new password can not be the same as old password");
+    }
+    const user = await User.findById(id);
+    if (!user) {return res.status(404).send("User not found.");}
+    const isMatch = bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).send("Invalid old password.");
+    }
+    const saltRounds = 10
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    user.password = hashedPassword;
+    await user.save()
+    res.status(200).send("password updated successfully")
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
+//Changing or updating a user name
+// export const upDateUsernameById= async (req, res) => {
+//   try {
+//     const { username, password } = req.body;
+//     if (!username || !password) {
+//       return res.status(400).send("Previous Username and password are required.");}
+//     const user = await User.findByIdAndUpdate(req.params.id,{ username: username },{ new: true, runValidators: true }
+//     );
+//     if (!user) {return res.status(404).send("User not found.");}
+//     res.status(200).send(user);
+//   } catch (error) {
+//     res.status(500).send({ message: error.message });
+//   }
+// };
+
+// Changing or updating user password
+// export const upDateUserPassword = async (req, res) => {
+//   try {
+//     const { oldPassword, newPassword } = req.body;
+//     if (!oldPassword || !newPassword) {
+//       return res.status(400).send("Both old and new passwords are required.");
+//     }
+//     const user = await User.findById(req.params.id);
+//     if (!user) {
+//       return res.status(404).send("User not found.");
+//     }
+//     const isMatch = bcrypt.compare(oldPassword, user.password);
+//     if (!isMatch) {
+//       return res.status(401).send("Invalid old password.");
+//     }
+//     const hashedPassword = await bcrypt.hash(newPassword, 10);
+//     user.password = hashedPassword;
+//     await user.save();
+//     res.status(200).send("Password updated successfully.");
+//   } catch (error) {
+//     res.status(500).send({ message: error.message });
+//   }
+// };
