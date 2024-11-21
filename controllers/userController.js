@@ -1,6 +1,6 @@
 import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
-
+//creating a user
 export const CreateUser = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -8,26 +8,28 @@ export const CreateUser = async (req, res) => {
     if (exitingUser) {
       return res.status(400).send("user already exists");
     }
-    const user = new User(req.body)
+    const user = new User(req.body);
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds)
-    user.password = hashedPassword
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    user.password = hashedPassword;
     await user.save();
-    res.status(201).send("User created")
+    res.status(201).send("User created");
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
 };
 
+//fetching all users
 export const GetAllUsers = async (req, res) => {
   try {
-    const getAllUser = await User.find({} ,{password:0});
+    const getAllUser = await User.find({}, { password: 0 });
     res.status(200).send(getAllUser);
   } catch {
     res.status(500).send({ message: "err User not found" });
   }
 };
 
+//finding a particular user using it'S Id
 export const findById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -41,6 +43,7 @@ export const findById = async (req, res) => {
   }
 };
 
+// user login requirement
 export const userLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -49,7 +52,7 @@ export const userLogin = async (req, res) => {
     }
     const user = await User.findOne({ username });
     if (!user) return res.status(401).send("username dose not exist");
-    const isCorrectPassword = await bcrypt.compare(password, user.password)
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
     if (!isCorrectPassword) {
       return res.status(401).send("invalid password");
     }
@@ -58,3 +61,46 @@ export const userLogin = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+
+// Changing or updating a user name
+export const upDateUsername = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).send("Previous Username and password are required.");}
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { username: username },
+      { new: true, runValidators: true }
+    );
+    if (!user) {return res.status(404).send("User not found.");}
+    res.status(200).send(user);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
+// Changing or updating user password
+export const upDateUserPassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).send("Both old and new passwords are required.");
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).send("Invalid old password.");
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.status(200).send("Password updated successfully.");
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
