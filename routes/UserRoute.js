@@ -8,18 +8,18 @@ import {
   upDateUsernameById,
   userLogin,
 } from "../controllers/userController.js";
+import { validateUser } from "../middleware/validateUser.js";
+import { validateJWT } from "../middleware/jwtMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  res.status(200).json({ massage: "hello world" });
-});
 
 router.post("/create", CreateUser);
-router.get("/get", GetAllUsers);
+router.get("/get",validateJWT, validateUser, GetAllUsers);
 router.get("/:id", findById);
 router.post("/login", userLogin);
-router.patch("/update-Username/:id", upDateUsernameById);
-router.patch("/update-password/:id", updatePasswordById);
+router.patch("/update-Username/:id",validateJWT, upDateUsernameById);
+router.patch("/update-password/:id",validateJWT, updatePasswordById);
+
 
 export default router;
