@@ -2,6 +2,8 @@ import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { OTPgenerator } from "../lib/OTPgenerator.js";
+import nodemailer from "nodemailer";
 dotenv.config();
 
 //creating a user
@@ -63,7 +65,7 @@ export const userLogin = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    res.status(200).json({massage: "login successful", token});
+    res.status(200).json({ massage: "login successful", token });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -97,18 +99,58 @@ export const updatePasswordById = async (req, res) => {
         .send("new password can not be the same as old password");
     }
     const user = await User.findById(id);
-    if (!user) {return res.status(404).send("User not found.");}
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
     const isMatch = bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(401).send("Invalid old password.");
     }
-    const saltRounds = 10
+    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
     user.password = hashedPassword;
-    await user.save()
-    res.status(200).send("password updated successfully")
+    await user.save();
+    res.status(200).send("password updated successfully");
   } catch (error) {
     res.status(500).send({ message: error.message });
+  }
+};
+export const sendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email }); //check if user exit
+    if (!user) return res.status(404).send("user not found"); //Returns 404 if user not found
+
+    //generate otp
+    let otp = await OTPgenerator(email); //generate OTP
+    //send"s otp to users email
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: "kelvinewurum@gmail.com",
+        pass: process.env.GOOGLE_APP_PASSWORD,
+      },
+    });
+    const mailOptions = {
+      from: "kelvinewurum@gmail",
+      to: email,
+      subject: "Hello from Nodemailer",
+      text: `here is your otp ${otp}. expires in 60 sec`,
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email: ", error);
+        res.status(500).send(error.message);
+      } else {
+        console.log("Email sent: ", info.response);
+        res.status(200).send("OTP sent successfully");
+      }
+    });
+  } catch (error) {
+    res.status(500).send(error.message);
   }
 };
 

@@ -4,6 +4,7 @@ import {
   CreateUser,
   findById,
   GetAllUsers,
+  sendOTP,
   updatePasswordById,
   upDateUsernameById,
   userLogin,
@@ -15,11 +16,12 @@ const router = express.Router();
 
 
 router.post("/create", CreateUser);
-router.get("/get",validateJWT, GetAllUsers);
+router.get("/get-all-users",validateJWT, GetAllUsers);
 router.get("/:id", findById);
 router.post("/login", userLogin);
 router.patch("/update-Username/:id",validateJWT, upDateUsernameById);
 router.patch("/update-password/:id",validateJWT, updatePasswordById);
+router.post("/send-otp",sendOTP)
 
 
 export default router;
