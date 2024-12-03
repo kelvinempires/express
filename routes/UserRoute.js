@@ -4,6 +4,7 @@ import {
   CreateUser,
   findById,
   GetAllUsers,
+  login_otp,
   sendOTP,
   updatePasswordById,
   upDateUsernameById,
@@ -11,6 +12,7 @@ import {
 } from "../controllers/userController.js";
 import { validateUser } from "../middleware/validateUser.js";
 import { validateJWT } from "../middleware/jwtMiddleware.js";
+import { validateOtp } from "../middleware/otp_Validator.js";
 
 const router = express.Router();
 
@@ -22,6 +24,7 @@ router.post("/login", userLogin);
 router.patch("/update-Username/:id",validateJWT, upDateUsernameById);
 router.patch("/update-password/:id",validateJWT, updatePasswordById);
 router.post("/send-otp",sendOTP)
+router.post("/login-otp", validateOtp, login_otp)
 
 
 export default router;
